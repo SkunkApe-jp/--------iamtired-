@@ -113,7 +113,7 @@ export const Canvas: React.FC<CanvasProps> = ({
 
   return (
     <div
-      className={`canvas-container w-full h-full bg-zinc-100 dark:bg-[#09090b] overflow-hidden relative touch-none transition-colors duration-300 ${(interactions.isConnectionDraggingState || toolMode === ToolMode.PAN || isSpacePressed || isSelectionActive || isDraggingNode) ? 'select-none' : ''}`}
+      className={`canvas-container w-full h-full bg-transparent overflow-hidden relative touch-none transition-colors duration-300 ${(interactions.isConnectionDraggingState || toolMode === ToolMode.PAN || isSpacePressed || isSelectionActive || isDraggingNode) ? 'select-none' : ''}`}
       onPointerDown={interactions.handlePointerDown}
       onPointerMove={interactions.handlePointerMove} onPointerUp={interactions.handlePointerUp} onPointerLeave={interactions.handlePointerUp}
       onWheel={handleWheel} onDoubleClick={handleDoubleClick}

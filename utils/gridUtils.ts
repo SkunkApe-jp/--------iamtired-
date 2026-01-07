@@ -7,6 +7,9 @@ export const snap = (val: number): number => {
     return Math.round(val / SNAP_SIZE) * SNAP_SIZE;
 };
 
+import dotPattern from '../src/assets/dotted-pattern.svg';
+import dotPatternDark from '../src/assets/dotted-pattern-dark.svg';
+
 interface GridBackgroundOptions {
     viewport: Viewport;
     showGrid: boolean;
@@ -14,22 +17,16 @@ interface GridBackgroundOptions {
 }
 
 export const getGridBackground = ({ viewport, showGrid, isDarkMode }: GridBackgroundOptions): React.CSSProperties => {
-    const bgSize = SNAP_SIZE * viewport.scale;
-    const majorBgSize = (SNAP_SIZE * 5) * viewport.scale;
-    const minorAlpha = showGrid ? Math.max(0, Math.min(1, (viewport.scale - 0.5) * 4)) * (isDarkMode ? 0.05 : 0.08) : 0;
-    const majorAlpha = showGrid ? (isDarkMode ? 0.08 : 0.12) : 0;
-    const gridColor = isDarkMode ? '161, 161, 170' : '82, 82, 91';
-
     if (!showGrid) return {};
 
+    const bgSize = 85.5;
+
+    const dotSvg = isDarkMode ? dotPatternDark : dotPattern;
+
     return {
-        backgroundImage: `
-        linear-gradient(to right, rgba(${gridColor}, ${majorAlpha}) 1px, transparent 1px),
-        linear-gradient(to bottom, rgba(${gridColor}, ${majorAlpha}) 1px, transparent 1px),
-        linear-gradient(to right, rgba(${gridColor}, ${minorAlpha}) 1px, transparent 1px),
-        linear-gradient(to bottom, rgba(${gridColor}, ${minorAlpha}) 1px, transparent 1px)
-    `,
-        backgroundSize: `${majorBgSize}px ${majorBgSize}px, ${majorBgSize}px ${majorBgSize}px, ${bgSize}px ${bgSize}px, ${bgSize}px ${bgSize}px`,
-        backgroundPosition: `${viewport.x}px ${viewport.y}px`
+        backgroundImage: `url("${dotSvg}")`,
+        backgroundSize: `${bgSize}px ${bgSize}px`,
+        backgroundPosition: `${viewport.x}px ${viewport.y}px`,
+        backgroundRepeat: 'repeat'
     };
 };
