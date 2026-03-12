@@ -21,9 +21,9 @@ export const useEventHandlers = ({
             if (e.code === 'Space' && !e.repeat && !isEditing) setIsSpacePressed(true);
             if (isEditing) return;
 
-            if (e.key === 'Delete' || e.key === 'Backspace') {
-                onDeleteSelected();
-            }
+            // if (e.key === 'Delete' || e.key === 'Backspace') {
+            //     onDeleteSelected();
+            // }
 
             if (e.key.toLowerCase() === 'v') setToolMode(ToolMode.SELECT);
             if (e.key.toLowerCase() === 'h') setToolMode(ToolMode.PAN);
