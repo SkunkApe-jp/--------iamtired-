@@ -27,10 +27,12 @@ export const useTabGraph = (activeTab: Tab, onUpdateTabData: (nodes: WikiNode[],
     // Sync changes back to tab state
     useEffect(() => {
         const timeout = setTimeout(() => {
-            onUpdateTabData(nodes, connections, viewport);
-        }, 100);
+            if (activeTab.id === prevTabIdRef.current) {
+                onUpdateTabData(nodes, connections, viewport);
+            }
+        }, 50);
         return () => clearTimeout(timeout);
-    }, [nodes, connections, viewport, onUpdateTabData]);
+    }, [nodes, connections, viewport, onUpdateTabData, activeTab.id]);
 
     const getNextZIndex = useCallback(() => nodes.length === 0 ? 1 : Math.max(...nodes.map(n => n.zIndex || 0)) + 1, [nodes]);
 
@@ -53,7 +55,7 @@ export const useTabGraph = (activeTab: Tab, onUpdateTabData: (nodes: WikiNode[],
 
     // Modular Hooks
     const { groupNodes, ungroupNodes, reparentNode } = useGraphGrouping({ nodes, setNodes, generateId, getNextZIndex });
-    const { setNodeImage, expandNodeAI, editNodeAI, branchFromNode } = useGraphAI({ nodes, setNodes, updateNode, connectNodes, generateId, getNextZIndex });
+    const { setNodeImage, expandNodeAI, editNodeAI, branchFromNode, generateContentForConvergentNode, generateTitleFromContent } = useGraphAI({ nodes, setNodes, updateNode, connectNodes, generateId, getNextZIndex, connections });
 
     // Node & Connection CRUD
     const moveToFront = useCallback((nodeId: string) => {
@@ -151,7 +153,7 @@ export const useTabGraph = (activeTab: Tab, onUpdateTabData: (nodes: WikiNode[],
         nodes, setNodes, connections, setConnections, viewport, setViewport,
         addNode, updateNode, updateNodes, updateSelectedNodes, deleteNode, selectNode, selectNodes, 
         groupNodes, ungroupNodes, reparentNode,
-        branchFromNode, expandNodeAI, editNodeAI, setNodeImage,
+        branchFromNode, expandNodeAI, editNodeAI, setNodeImage, generateContentForConvergentNode, generateTitleFromContent,
         connectNodes, updateConnection, updateConnectionLabel, deleteConnection, selectConnection, loadGraph, generateId
     };
 };

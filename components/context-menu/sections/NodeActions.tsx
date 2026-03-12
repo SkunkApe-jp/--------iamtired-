@@ -2,7 +2,7 @@ import React from 'react';
 import { 
     Copy, Scissors, Clipboard, Trash2, GitBranch, Plus, 
     Image as ImageIcon, Sparkles, Type, MessageSquare, Info, 
-    FileText, Heading, Box
+    FileText, Heading, Box, Hash
 } from 'lucide-react';
 import { ContextMenuItem, ContextMenuSection } from '../ContextPrimitives';
 
@@ -121,6 +121,13 @@ export const NodeActions: React.FC<NodeActionsProps> = ({ nodeType, onAction }) 
                 )}
                 {nodeType === 'text' && (
                     <>
+                        <ContextMenuItem 
+                            label="Generate Title" 
+                            icon={<Hash size={14} />}
+                            variant="ai"
+                            onClick={() => onAction('ai-generate-title')} 
+                            subtitle="Create title from content"
+                        />
                         <ContextMenuItem 
                             label="Expand with AI" 
                             icon={<Sparkles size={14} />}

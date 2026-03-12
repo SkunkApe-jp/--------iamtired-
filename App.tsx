@@ -79,6 +79,7 @@ function App() {
   } = useAppState();
 
   const [showExportModal, setShowExportModal] = React.useState(false);
+  const [showHUD, setShowHUD] = React.useState(true);
 
   const {
     tabs,
@@ -191,6 +192,32 @@ function App() {
     [saveData, addToast]
   );
 
+  const handleTestAggregation = useCallback(() => {
+    const selectedNode = graph.nodes.find(n => n.selected);
+    if (!selectedNode) {
+      addToast({ title: 'No Selection', message: 'Please select a node to test aggregation', type: 'warning' });
+      return;
+    }
+    
+    const sourceNodes = graph.connections
+      .filter(c => c.targetId === selectedNode.id)
+      .map(c => graph.nodes.find(n => n.id === c.sourceId))
+      .filter(Boolean);
+    
+    if (sourceNodes.length === 0) {
+      addToast({ title: 'No Sources', message: 'Selected node has no incoming connections', type: 'warning' });
+      return;
+    }
+    
+    if (sourceNodes.length === 1) {
+      addToast({ title: 'Single Source', message: 'Node has only 1 incoming connection. Need 2+ for aggregation.', type: 'warning' });
+      return;
+    }
+    
+    graph.generateContentForConvergentNode(selectedNode.id);
+    addToast({ title: 'Aggregation Started', message: `Aggregating content from ${sourceNodes.length} source nodes`, type: 'success' });
+  }, [graph, addToast]);
+
   useEventHandlers({
     viewport: graph.viewport,
     mousePosRef,
@@ -262,6 +289,19 @@ function App() {
     };
 
     initStorage();
+  }, []);
+
+  // HUD visibility hotkey (Shift+H)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.shiftKey && e.key === 'H') {
+        e.preventDefault();
+        setShowHUD(prev => !prev);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
   const selectedNode = graph.nodes.find((n) => n.selected);
@@ -429,7 +469,7 @@ function App() {
     });
   };
 
-  const selectedCount = graph.nodes.filter((n) => n.selected).length;
+  const selectedCount = useMemo(() => graph.nodes.filter((n) => n.selected).length, [graph.nodes]);
 
   const wordCount = useMemo(() => {
     const selectedNodes = graph.nodes.filter((n) => n.selected);
@@ -478,6 +518,7 @@ function App() {
       <div
         className={isPanDragging || isSelecting ? "pointer-events-none" : ""}
       >
+        {showHUD && (
         <TabBar
           tabs={tabs}
           activeTabId={activeTabId}
@@ -488,11 +529,13 @@ function App() {
           onReorderTabs={reorderTabs}
           globalFont={globalBodyFont}
         />
+        )}
       </div>
       <div className="flex-1 relative overflow-hidden">
         <div
           className={isPanDragging || isSelecting ? "pointer-events-none" : ""}
         >
+          {showHUD && (
           <Toolbar
             onAddNode={onAddNode}
             toolMode={isSpacePressed ? ToolMode.PAN : toolMode}
@@ -529,6 +572,7 @@ function App() {
             onToggleTheme={() => setIsDarkMode(!isDarkMode)}
             onOpenSettings={() => setShowSettings(true)}
             onOpenWelcome={() => setShowWelcome(true)}
+            onTestAggregation={handleTestAggregation}
           >
             {selectedNode ? (
               <SelectedNodeToolbar
@@ -570,6 +614,7 @@ function App() {
               />
             )}
           </Toolbar>
+          )}
         </div>
         <Canvas
           nodes={graph.nodes}
@@ -620,6 +665,7 @@ function App() {
         <div
           className={isPanDragging || isSelecting ? "pointer-events-none" : ""}
         >
+          {showHUD && (
           <HUD
             nodeCount={graph.nodes.length}
             connectionCount={graph.connections.length}
@@ -628,6 +674,7 @@ function App() {
             lastSaved={lastSaved}
             globalFont={globalBodyFont}
           />
+          )}
         </div>
       </div>
       <div

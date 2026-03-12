@@ -1,6 +1,6 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { MousePointer, Move, Image as ImageIcon, StickyNote, Upload, Save, Download, RefreshCcw, HardDrive, Grid, Magnet, Sun, Moon, ChevronLeft, ChevronRight, Settings, Sparkles, Star, X } from 'lucide-react';
+import { MousePointer, Move, Image as ImageIcon, StickyNote, Upload, Save, Download, RefreshCcw, HardDrive, Grid, Magnet, Sun, Moon, ChevronLeft, ChevronRight, Settings, Sparkles, Star, X, Zap } from 'lucide-react';
 import { ToolMode } from '../../types';
 
 interface ToolButtonProps {
@@ -57,6 +57,9 @@ interface ToolbarProps {
   onOpenSettings: () => void;
   onOpenWelcome: () => void;
 
+  // Test aggregation
+  onTestAggregation?: () => void;
+
   children?: React.ReactNode;
 }
 
@@ -67,6 +70,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
   showStars, onToggleStars,
   customBackground, onSetCustomBackground,
   isDarkMode, onToggleTheme, onOpenSettings, onOpenWelcome,
+  onTestAggregation,
   children
 }) => {
   const [showSaveMenu, setShowSaveMenu] = useState(false);
@@ -196,7 +200,15 @@ export const Toolbar: React.FC<ToolbarProps> = ({
                 <ImageIcon size={18} />
               </button>
             </div>
+
             <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleFileUpload} />
+
+            {/* Test Aggregation Button */}
+            {onTestAggregation && (
+              <button onClick={onTestAggregation} className={btnClass} title="Test Content Aggregation (Select a node with multiple incoming connections)">
+                <Zap size={18} />
+              </button>
+            )}
           </div>
         </div>
 

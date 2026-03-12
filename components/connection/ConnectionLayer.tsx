@@ -62,13 +62,17 @@ export const ConnectionLayer: React.FC<ConnectionLayerProps> = ({
         <marker
           id="connection-arrow"
           viewBox="0 0 10 10"
-          refX="8"
+          refX="9"
           refY="5"
-          markerWidth="7"
-          markerHeight="7"
+          markerWidth="6"
+          markerHeight="6"
           orient="auto"
         >
-          <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--text-main)" fillOpacity="0.7" />
+          <path 
+            d="M 0 1 L 7 5 L 0 9 C 1 7, 2 5, 1 3 Z" 
+            fill="var(--text-main)" 
+            fillOpacity="0.75" 
+          />
         </marker>
       </defs>
 

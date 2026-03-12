@@ -21,6 +21,7 @@ interface UseContextMenuActionsProps {
         ungroupNodes: (ids: string[]) => void;
         editNodeAI: (id: string, content: string, instr: string) => void;
         setNodeImage: (id: string, title: string, mode: 'search') => void;
+        generateTitleFromContent: (id: string) => void;
     };
     contextMenu: { visible: boolean; x: number; y: number; type: string; targetId?: string; selectedText?: string; };
     hideContextMenu: () => void;
@@ -112,6 +113,7 @@ export const useContextMenuActions = ({
         else if (action.startsWith('ai-') && targetNode) {
             if (action === 'ai-expand-node') graph.updateNode(targetNode.id, { activeAIPanel: 'expand' });
             else if (action === 'ai-edit-node') graph.updateNode(targetNode.id, { activeAIPanel: 'edit' });
+            else if (action === 'ai-generate-title') graph.generateTitleFromContent(targetNode.id);
             else if (action === 'ai-ask-image') graph.updateNode(targetNode.id, { activeAIPanel: 'ask' });
             else if (action === 'ai-analyze-image') graph.editNodeAI(targetNode.id, targetNode.content, "Analyze this image and describe what you see in detail.");
             else if (action === 'ai-expand-caption') graph.branchFromNode(targetNode.id, `Expand on this caption: ${targetNode.title}`);

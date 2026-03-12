@@ -1,5 +1,10 @@
-import { Position, WikiNode, HandlePosition } from '../types';
+import { Position, WikiNode, HandlePosition, Connection } from '../types';
 import { getAbsolutePosition } from './nodeUtils';
+
+export const getSourceNodes = (nodeId: string, connections: Connection[], nodes: WikiNode[]): WikiNode[] => {
+  const incomingConnections = connections.filter(c => c.targetId === nodeId);
+  return incomingConnections.map(c => nodes.find(n => n.id === c.sourceId)).filter((node): node is WikiNode => node !== null);
+};
 
 export const getHandlePosition = (node: WikiNode, handle: HandlePosition, allNodes?: WikiNode[]): Position => {
   const { x, y } = allNodes ? getAbsolutePosition(node, allNodes) : node.position;

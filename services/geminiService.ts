@@ -60,13 +60,22 @@ const generateTextCommon = async (systemPrompt: string, userPrompt: string): Pro
     throw new Error("Provider not supported.");
 };
 
-export const generateArticleContent = async (title: string, parentContext?: string | { title: string, content: string }): Promise<string> => {
+export const generateArticleContent = async (title: string, parentContext?: string | { title: string, content: string } | Array<{ title: string, content: string }>): Promise<string> => {
     let contextPrompt = "";
     if (parentContext) {
         if (typeof parentContext === 'string') {
             contextPrompt = `The user is branching out from: "${parentContext}". Ensure relevance.`;
+        } else if (Array.isArray(parentContext)) {
+            if (parentContext.length === 1) {
+                contextPrompt = `User is branching from "${parentContext[0].title}".\nParent Content:\n"""\n${parentContext[0].content}\n"""\nEnsure logical connection.`;
+            } else {
+                const combinedContext = parentContext.map((ctx, index) => 
+                    `Source ${index + 1} (${ctx.title}):\n"""\n${ctx.content}\n"""`
+                ).join('\n\n');
+                contextPrompt = `User is creating a node that aggregates from multiple sources:\n\n${combinedContext}\n\nSynthesize these sources into a coherent article for: "${title}". Focus on key themes and connections.`;
+            }
         } else {
-            contextPrompt = `User is branching from "${parentContext.title}".\nParent Content:\n"""\n${parentContext.content.slice(0, 3000)}\n"""\nEnsure logical connection.`;
+            contextPrompt = `User is branching from "${parentContext.title}".\nParent Content:\n"""\n${parentContext.content}\n"""\nEnsure logical connection.`;
         }
     }
 
@@ -143,7 +152,9 @@ export const generateImageForArticle = async (title: string): Promise<string | n
 export const searchImageForArticle = async (title: string): Promise<string | null> => {
     const { provider, apiKey } = currentConfig;
 
-    if (!apiKey) throw new Error("API Key missing.");
+    if (provider !== 'local' && !apiKey) {
+        throw new Error("API Key missing. Please configure AI in Settings.");
+    }
     if (provider !== 'gemini') return null;
 
     const ai = new GoogleGenAI({ apiKey });
@@ -164,4 +175,11 @@ export const searchImageForArticle = async (title: string): Promise<string | nul
         console.error("Image search error:", error);
         throw error;
     }
+};
+
+export const generateTitleFromContent = async (content: string): Promise<string> => {
+    const system = "You are an expert editor. Generate concise, descriptive titles (2-6 words) for given content. Return ONLY the title, no quotes or extra text.";
+    const prompt = `Generate a title for this content:\n\n${content}`;
+
+    return generateTextCommon(system, prompt);
 };

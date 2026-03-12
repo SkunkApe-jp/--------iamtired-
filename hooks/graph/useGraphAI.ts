@@ -1,6 +1,7 @@
 import React, { useCallback } from 'react';
 import { WikiNode, Connection, HandlePosition } from '../../types';
-import { generateArticleContent, expandStub, refineContent, generateImageForArticle, searchImageForArticle } from '../../services/geminiService';
+import { generateArticleContent, expandStub, refineContent, generateImageForArticle, searchImageForArticle, generateTitleFromContent as generateTitleFromContentService } from '../../services/geminiService';
+import { getSourceNodes } from '../../utils/connectionUtils';
 import { useToast } from '../../context/ToastContext';
 
 interface UseGraphAIProps {
@@ -10,9 +11,10 @@ interface UseGraphAIProps {
     connectNodes: (s: string, t: string, sh: HandlePosition, th: HandlePosition) => void;
     generateId: () => string;
     getNextZIndex: () => number;
+    connections: Connection[];
 }
 
-export const useGraphAI = ({ nodes, setNodes, updateNode, connectNodes, generateId, getNextZIndex }: UseGraphAIProps) => {
+export const useGraphAI = ({ nodes, setNodes, updateNode, connectNodes, generateId, getNextZIndex, connections }: UseGraphAIProps) => {
     const { addToast } = useToast();
 
     const handleAIError = useCallback((id: string, e: any, fallbackText?: string) => {
@@ -77,5 +79,40 @@ export const useGraphAI = ({ nodes, setNodes, updateNode, connectNodes, generate
         }
     }, [nodes, setNodes, connectNodes, updateNode, generateId, handleAIError]);
 
-    return { setNodeImage, expandNodeAI, editNodeAI, branchFromNode };
+    const generateContentForConvergentNode = useCallback(async (nodeId: string) => {
+        const targetNode = nodes.find(n => n.id === nodeId);
+        if (!targetNode) return;
+
+        const sourceNodes = getSourceNodes(nodeId, connections, nodes);
+        if (sourceNodes.length === 0) return;
+
+        updateNode(nodeId, { isGenerating: true });
+
+        try {
+            const parentContexts = sourceNodes.map(node => ({ 
+                title: node.title, 
+                content: node.content || 'No content available' 
+            }));
+            const content = await generateArticleContent(targetNode.title, parentContexts);
+            updateNode(nodeId, { content, isGenerating: false });
+        } catch (e: any) {
+            handleAIError(nodeId, e, 'Aggregation failed.');
+        }
+    }, [nodes, connections, updateNode, handleAIError]);
+
+    const generateTitleFromContent = useCallback(async (nodeId: string) => {
+        const node = nodes.find(n => n.id === nodeId);
+        if (!node || !node.content) return;
+
+        updateNode(nodeId, { isGenerating: true });
+
+        try {
+            const title = await generateTitleFromContentService(node.content);
+            updateNode(nodeId, { title, isGenerating: false });
+        } catch (e: any) {
+            handleAIError(nodeId, e, 'Title generation failed.');
+        }
+    }, [nodes, updateNode, handleAIError]);
+
+    return { setNodeImage, expandNodeAI, editNodeAI, branchFromNode, generateContentForConvergentNode, generateTitleFromContent };
 };
