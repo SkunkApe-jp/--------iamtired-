@@ -6,6 +6,12 @@
 
 ---
 
+## Screenshot
+
+![Application Screenshot](screenshots/screenshot1.png)
+
+---
+
 ## Changelog
 
 ### v1.2 - Event Handler Updates (Mar 2026)
