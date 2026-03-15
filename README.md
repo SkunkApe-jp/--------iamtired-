@@ -6,9 +6,9 @@
 
 ---
 
-## Screenshot
+## amitired?
 
-![Application Screenshot](/screenshots/screenshot1.png)
+![Application Screenshot](screenshots/screenshot1.png)
 
 ---
 
