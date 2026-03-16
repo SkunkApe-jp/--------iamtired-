@@ -15,7 +15,8 @@ export const getDefaultModel = (provider: AIProvider): string => {
 export const generateWithOpenAI = async (
     systemPrompt: string,
     userPrompt: string,
-    config: AIConfig
+    config: AIConfig,
+    imageData?: string
 ): Promise<string> => {
     const { apiKey, baseUrl, model, provider } = config;
     const defaultBaseUrl = provider === 'openai' ? 'https://api.openai.com/v1' :
@@ -24,6 +25,11 @@ export const generateWithOpenAI = async (
             'https://openrouter.ai/api/v1';
 
     const apiUrl = (baseUrl || defaultBaseUrl).replace(/\/$/, '') + '/chat/completions';
+
+    const userContent = imageData ? [
+        { type: 'text', text: userPrompt },
+        { type: 'image_url', image_url: { url: imageData } }
+    ] : userPrompt;
 
     const response = await fetch(apiUrl, {
         method: 'POST',
@@ -39,7 +45,7 @@ export const generateWithOpenAI = async (
             model: model,
             messages: [
                 { role: 'system', content: systemPrompt },
-                { role: 'user', content: userPrompt }
+                { role: 'user', content: userContent }
             ]
         })
     });
@@ -56,9 +62,28 @@ export const generateWithOpenAI = async (
 export const generateWithClaude = async (
     systemPrompt: string,
     userPrompt: string,
-    config: AIConfig
+    config: AIConfig,
+    imageData?: string
 ): Promise<string> => {
     const { apiKey, model } = config;
+
+    let userContent: any = userPrompt;
+    if (imageData) {
+        const match = imageData.match(/^data:(image\/\w+);base64,(.+)$/);
+        if (match) {
+            userContent = [
+                {
+                    type: 'image',
+                    source: {
+                        type: 'base64',
+                        media_type: match[1],
+                        data: match[2]
+                    }
+                },
+                { type: 'text', text: userPrompt }
+            ];
+        }
+    }
 
     const response = await fetch('https://api.anthropic.com/v1/messages', {
         method: 'POST',
@@ -72,7 +97,7 @@ export const generateWithClaude = async (
             model: model || 'claude-3-5-sonnet-latest',
             max_tokens: 1024,
             system: systemPrompt,
-            messages: [{ role: 'user', content: userPrompt }]
+            messages: [{ role: 'user', content: userContent }]
         })
     });
 

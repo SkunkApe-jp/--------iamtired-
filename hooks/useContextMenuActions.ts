@@ -10,7 +10,7 @@ interface UseContextMenuActionsProps {
         viewport: Viewport;
         deleteNode: (id: string) => void;
         deleteConnection: (id: string) => void;
-        branchFromNode: (id: string, text: string) => void;
+        branchFromNode: (id: string, text: string, isVision?: boolean) => void;
         updateNode: (id: string, updates: Partial<WikiNode>) => void;
         updateConnection: (id: string, updates: Partial<Connection>) => void;
         addNode: (type: any, title: string, content?: string, image?: string, pos?: any) => void;
@@ -19,7 +19,7 @@ interface UseContextMenuActionsProps {
         generateId: () => string;
         groupNodes: (ids: string[]) => void;
         ungroupNodes: (ids: string[]) => void;
-        editNodeAI: (id: string, content: string, instr: string) => void;
+        editNodeAI: (id: string, content: string, instr: string, isVision?: boolean, imageData?: string) => void;
         setNodeImage: (id: string, title: string, mode: 'search') => void;
         generateTitleFromContent: (id: string) => void;
     };
@@ -115,8 +115,8 @@ export const useContextMenuActions = ({
             else if (action === 'ai-edit-node') graph.updateNode(targetNode.id, { activeAIPanel: 'edit' });
             else if (action === 'ai-generate-title') graph.generateTitleFromContent(targetNode.id);
             else if (action === 'ai-ask-image') graph.updateNode(targetNode.id, { activeAIPanel: 'ask' });
-            else if (action === 'ai-analyze-image') graph.editNodeAI(targetNode.id, targetNode.content, "Analyze this image and describe what you see in detail.");
-            else if (action === 'ai-expand-caption') graph.branchFromNode(targetNode.id, `Expand on this caption: ${targetNode.title}`);
+            else if (action === 'ai-analyze-image') graph.branchFromNode(targetNode.id, "Image Analysis", true);
+            else if (action === 'ai-expand-caption') graph.branchFromNode(targetNode.id, `Expansion: ${targetNode.title}`, true);
         }
         else if (action === 'edit-connection-label' && contextMenu.targetId) {
             graph.updateConnection(contextMenu.targetId, { isEditing: true, selected: true });

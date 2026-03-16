@@ -17,19 +17,38 @@ export const configureAI = (config: AIConfig) => {
     console.log("AI Configured:", { provider: currentConfig.provider, model: currentConfig.model });
 };
 
-const generateTextCommon = async (systemPrompt: string, userPrompt: string): Promise<string> => {
-    const { provider, apiKey, model } = currentConfig;
+const generateTextCommon = async (systemPrompt: string, userPrompt: string, options?: { isVision?: boolean, imageData?: string }): Promise<string> => {
+    let { provider, apiKey, model } = currentConfig;
 
     if (provider !== 'local' && !apiKey) {
         throw new Error("⚠️ API Key missing. Please configure AI in Settings.");
     }
 
+    // Automatically override Groq model with vision-capable scout model if operation is vision-related
+    if (provider === 'groq' && options?.isVision) {
+        model = getDefaultModel('groq');
+    }
+
     if (provider === 'gemini') {
         const ai = new GoogleGenAI({ apiKey });
         try {
+            const contents: any[] = [];
+            if (options?.imageData) {
+                const match = options.imageData.match(/^data:(image\/\w+);base64,(.+)$/);
+                if (match) {
+                    contents.push({
+                        inlineData: {
+                            mimeType: match[1],
+                            data: match[2]
+                        }
+                    });
+                }
+            }
+            contents.push({ text: userPrompt });
+
             const response = await ai.models.generateContent({
                 model: model || 'gemini-3-flash-preview',
-                contents: userPrompt,
+                contents,
                 config: { systemInstruction: systemPrompt }
             });
             return response.text || "";
@@ -41,7 +60,9 @@ const generateTextCommon = async (systemPrompt: string, userPrompt: string): Pro
 
     if (provider === 'openai' || provider === 'openrouter' || provider === 'local' || provider === 'groq') {
         try {
-            return await generateWithOpenAI(systemPrompt, userPrompt, currentConfig);
+            // Create a temporary config with the possibly overridden model
+            const tempConfig = { ...currentConfig, model };
+            return await generateWithOpenAI(systemPrompt, userPrompt, tempConfig, options?.imageData);
         } catch (e) {
             console.error(`${provider} Error:`, e);
             throw new Error(`Error with ${provider}: ${(e as Error).message}`);
@@ -50,7 +71,9 @@ const generateTextCommon = async (systemPrompt: string, userPrompt: string): Pro
 
     if (provider === 'claude') {
         try {
-            return await generateWithClaude(systemPrompt, userPrompt, currentConfig);
+            // Create a temporary config with the possibly overridden model
+            const tempConfig = { ...currentConfig, model };
+            return await generateWithClaude(systemPrompt, userPrompt, tempConfig, options?.imageData);
         } catch (e) {
             console.error("Claude Error:", e);
             throw new Error(`Error with Claude: ${(e as Error).message}. (Check CORS/Proxy)`);
@@ -60,8 +83,14 @@ const generateTextCommon = async (systemPrompt: string, userPrompt: string): Pro
     throw new Error("Provider not supported.");
 };
 
-export const generateArticleContent = async (title: string, parentContext?: string | { title: string, content: string } | Array<{ title: string, content: string }>): Promise<string> => {
+export const generateArticleContent = async (
+    title: string, 
+    parentContext?: string | { title: string, content: string, image?: string } | Array<{ title: string, content: string }>,
+    isVisionRelated?: boolean
+): Promise<string> => {
     let contextPrompt = "";
+    let imageDataToPass: string | undefined = undefined;
+
     if (parentContext) {
         if (typeof parentContext === 'string') {
             contextPrompt = `The user is branching out from: "${parentContext}". Ensure relevance.`;
@@ -76,13 +105,21 @@ export const generateArticleContent = async (title: string, parentContext?: stri
             }
         } else {
             contextPrompt = `User is branching from "${parentContext.title}".\nParent Content:\n"""\n${parentContext.content}\n"""\nEnsure logical connection.`;
+            if (parentContext.image) {
+                imageDataToPass = parentContext.image;
+            }
         }
     }
 
-    const system = `You are an encyclopedia writer. Write in clean Markdown. No main # Title. Use **bold** for key terms. Approx 150-200 words.`;
-    const prompt = `${contextPrompt}\n\nWrite an entry for: "${title}".`;
+    const system = isVisionRelated 
+        ? "You are a visual analysis expert. Describe the image in the context of the requested title. Use Markdown."
+        : `You are an encyclopedia writer. Write in clean Markdown. No main # Title. Use **bold** for key terms. Approx 150-200 words.`;
 
-    return generateTextCommon(system, prompt);
+    const prompt = isVisionRelated
+        ? `Analyze the provided image and write about: "${title}".\n\nContext from parent:\n${contextPrompt}`
+        : `${contextPrompt}\n\nWrite an entry for: "${title}".`;
+
+    return generateTextCommon(system, prompt, { isVision: isVisionRelated, imageData: imageDataToPass });
 };
 
 export const suggestConnection = async (nodeA: string, nodeB: string): Promise<string> => {
@@ -101,11 +138,11 @@ export const expandStub = async (title: string, currentContent: string, userInst
     return generateTextCommon(system, prompt);
 };
 
-export const refineContent = async (content: string, instruction: string): Promise<string> => {
+export const refineContent = async (content: string, instruction: string, options?: { isVision?: boolean, imageData?: string }): Promise<string> => {
     const system = "You are an expert editor. Return strictly Markdown body content.";
     const prompt = `Rewrite based on instruction: "${instruction}".\n\nCurrent Content:\n${content}`;
 
-    return generateTextCommon(system, prompt);
+    return generateTextCommon(system, prompt, options);
 };
 
 export const generateImageForArticle = async (title: string): Promise<string | null> => {

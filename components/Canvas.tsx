@@ -19,10 +19,10 @@ interface CanvasProps {
   onDeleteNode: (id: string) => void;
   onSelectNode: (id: string) => void;
   onSelectNodes: (ids: string[]) => void;
-  onBranchNode: (id: string, text: string) => void;
+  onBranchNode: (id: string, text: string, isVision?: boolean) => void;
   onConnectEnd: (sourceId: string, targetId: string, sourceHandle: HandlePosition, targetHandle: HandlePosition) => void;
   onExpandAI: (id: string, title: string, content: string) => void;
-  onEditNodeAI: (id: string, content: string, instruction: string) => void;
+  onEditNodeAI: (id: string, content: string, instruction: string, isVision?: boolean) => void;
   onSetImage: (id: string, title: string, mode: 'generate' | 'search') => void;
   onSelectConnection: (id: string) => void;
   onUpdateConnectionLabel: (id: string, label: string) => void;

@@ -46,38 +46,61 @@ export const useGraphAI = ({ nodes, setNodes, updateNode, connectNodes, generate
         }
     }, [updateNode, handleAIError]);
 
-    const editNodeAI = useCallback(async (id: string, content: string, instruction: string) => {
+    const editNodeAI = useCallback(async (id: string, content: string, instruction: string, isVision?: boolean, imageData?: string) => {
         updateNode(id, { isGenerating: true });
         try { 
-            updateNode(id, { content: await refineContent(content, instruction), isGenerating: false }); 
+            updateNode(id, { content: await refineContent(content, instruction, { isVision, imageData }), isGenerating: false }); 
         } catch (e: any) { 
             handleAIError(id, e);
         }
     }, [updateNode, handleAIError]);
 
-    const branchFromNode = useCallback(async (sourceId: string, text: string) => {
+    const branchFromNode = useCallback(async (sourceId: string, text: string, isVision?: boolean) => {
         const sourceNode = nodes.find(n => n.id === sourceId);
         if (!sourceNode || !text.trim()) return;
-        const x = sourceNode.position.x + sourceNode.width + 100;
-        const y = sourceNode.position.y + (Math.random() * 50);
+
+        const branchTitle = (isVision && text === "Image Analysis") 
+            ? `Analysis of ${sourceNode.title || 'Image'}` 
+            : text.trim();
+
+        const x = sourceNode.position.x + sourceNode.width + 120;
+        const y = sourceNode.position.y + (Math.random() * 80 - 40);
         const newId = generateId();
         
+        // Inherit parentId to stay within the same group/frame
+        const parentId = sourceNode.parentId;
+
         setNodes(prev => [...prev, { 
-            id: newId, type: 'text', title: text.trim(), 
-            content: 'Generating...', position: { x, y }, 
-            width: 350, height: 250, imageHeight: 160, 
-            isGenerating: true, zIndex: 2 // Default Z for text nodes
+            id: newId, 
+            type: 'text', 
+            title: branchTitle, 
+            content: 'Analyzing image...', 
+            position: { x, y }, 
+            width: 350, 
+            height: 250, 
+            imageHeight: 160, 
+            isGenerating: true, 
+            zIndex: getNextZIndex(),
+            parentId
         }]);
         
         connectNodes(sourceId, newId, 'right', 'left');
         
         try {
-            const content = await generateArticleContent(text.trim(), { title: sourceNode.title, content: sourceNode.content });
+            const content = await generateArticleContent(
+                branchTitle, 
+                { 
+                    title: sourceNode.title, 
+                    content: sourceNode.content || '', 
+                    image: isVision ? sourceNode.coverImage : undefined 
+                },
+                isVision
+            );
             updateNode(newId, { content, isGenerating: false });
         } catch (e: any) { 
-            handleAIError(newId, e, 'Generation failed.');
+            handleAIError(newId, e, 'Analysis failed.');
         }
-    }, [nodes, setNodes, connectNodes, updateNode, generateId, handleAIError]);
+    }, [nodes, setNodes, connectNodes, updateNode, generateId, handleAIError, getNextZIndex]);
 
     const generateContentForConvergentNode = useCallback(async (nodeId: string) => {
         const targetNode = nodes.find(n => n.id === nodeId);

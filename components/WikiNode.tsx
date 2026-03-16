@@ -18,9 +18,9 @@ interface WikiNodeProps {
   onSelect: (id: string) => void;
   onDragStart: (e: React.PointerEvent, id: string, node: WikiNodeType) => void;
   onResizeStart: (e: React.PointerEvent, id: string, node: WikiNodeType, dir: ResizeDirection) => void;
-  onBranch: (sourceId: string, text: string) => void;
+  onBranch: (sourceId: string, text: string, isVision?: boolean) => void;
   onExpandAI: (id: string, title: string, content: string) => void;
-  onEditAI: (id: string, content: string, instruction: string) => void;
+  onEditAI: (id: string, content: string, instruction: string, isVision?: boolean) => void;
   onSetImage: (id: string, title: string, mode: 'generate' | 'search') => void;
   onDotDown: (e: React.PointerEvent, nodeId: string, handle: HandlePosition) => void;
   onDotClick: (nodeId: string, handle: HandlePosition) => void;
@@ -220,11 +220,23 @@ export const WikiNode = memo(({
   const submitAI = () => {
     if (!aiQuery.trim() && node.activeAIPanel !== 'expand') return;
     const mode = node.activeAIPanel;
-    if (mode === 'branch') onBranch(node.id, aiQuery);
-    else if (mode === 'ask') onEditAI(node.id, node.content, `Question: ${aiQuery}`);
-    else if (mode === 'edit') onEditAI(node.id, node.content, aiQuery);
-    else if (mode === 'expand') onEditAI(node.id, node.content, aiQuery || "Expand this content logically.");
-    else if (mode === 'image-gen') onEditAI(node.id, node.content, `Generate image: ${aiQuery}`);
+    
+    if (mode === 'branch') {
+        onBranch(node.id, aiQuery);
+    } else if (mode === 'ask') {
+        // For "Ask AI", branch out to a new node with the answer instead of overwriting content
+        // This is much better for the knowledge graph workflow.
+        // For image nodes, we trigger the vision capability.
+        onBranch(node.id, `Answer: ${aiQuery}`, node.type === 'image');
+    } else if (mode === 'edit') {
+        onEditAI(node.id, node.content, aiQuery);
+    } else if (mode === 'expand') {
+        onEditAI(node.id, node.content, aiQuery || "Expand this content logically.");
+    } else if (mode === 'image-gen') {
+        // Use the proper onSetImage callback for image generation
+        onSetImage(node.id, aiQuery, 'generate');
+    }
+    
     onUpdate(node.id, { activeAIPanel: undefined });
     setAiQuery("");
   };
