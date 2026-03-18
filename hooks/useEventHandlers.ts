@@ -26,7 +26,7 @@ export const useEventHandlers = ({
             // }
 
             if (e.key.toLowerCase() === 'v') setToolMode(ToolMode.SELECT);
-            if (e.key.toLowerCase() === 'h') setToolMode(ToolMode.PAN);
+            if (e.key.toLowerCase() === 'h' && !e.shiftKey) setToolMode(ToolMode.PAN);
             if (e.key.toLowerCase() === 't') {
                 const mouseX = mousePosRef.current.x, mouseY = mousePosRef.current.y;
                 const targetX = (mouseX - viewport.x) / viewport.scale, targetY = (mouseY - viewport.y) / viewport.scale;

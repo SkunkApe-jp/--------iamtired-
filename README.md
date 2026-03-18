@@ -72,3 +72,9 @@
 - **CSS Architecture**: Resolved CDN vs build-time Tailwind inconsistencies
 - **Font System**: Implemented proper font hierarchy with CSS variables
 - **Component Updates**: 40+ components updated with green color scheme
+
+### v1.8 - Keyboard Shortcut Fix (Mar 2026)
+- **Critical Bug Fix**: Resolved Shift+H keyboard shortcut conflict that caused unintended PAN mode activation
+- **User Experience**: Fixed cursor switching to grab mode when hiding sidebar with Shift+H
+- **Event Handling**: Modified useEventHandlers.ts to prevent H key from activating PAN mode when Shift is pressed
+- **Interaction Fix**: Users can now select text and interact with nodes normally after hiding sidebar
